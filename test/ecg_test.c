@@ -1,5 +1,7 @@
 #include <stdio.h>
 #include <sys/mman.h>
+#include <stdlib.h>     // Required for exit()
+#include <unistd.h>     // Required for close()
 #include <fcntl.h>
 #include <stdint.h>
 #include "../include/hw_address.h"
@@ -9,8 +11,8 @@
 #define HW_REGS_MASK         ( HW_REGS_SPAN - 1 )
 
 // Calculate the base offsets for JP1 and JP2 GPIOs based on the defined physical addresses and the HPS lightweight bridge base
-#define JP1_BASE_OFFSET            ( LSC_BASE_GPIO_JP1 - HPS_LWMASTER_BASE)
-#define JP2_BASE_OFFSET            ( LSC_BASE_GPIO_JP2 - HPS_LWMASTER_BASE)
+#define JP1_BASE_OFFSET            ( (uint32_t)LSC_BASE_GPIO_JP1 - (uint32_t)HPS_LWMASTER_BASE)
+#define JP2_BASE_OFFSET            ( (uint32_t)LSC_BASE_GPIO_JP2 - (uint32_t)HPS_LWMASTER_BASE)
 // JP1&JP2 Register offsets for JP1 and JP2 GPIOs
 #define GPIO_REG             0x00/sizeof(int)
 #define GPIO_DIR             0x04/sizeof(int)
@@ -18,7 +20,7 @@
 #define GPIO_EDGE_CAP        0x0C/sizeof(int)
  
 
-int main()
+int main(void)
 { 
     int fd;
     void *virtual_base;
@@ -46,4 +48,9 @@ int main()
       *jp1_dir = *jp2_dir; 
       printf("JP2 Value: 0x%02X\n", jp2_value);
    }
+   if( munmap( virtual_base, HW_REGS_SPAN ) != 0 ) {
+        printf( "ERROR: munmap() failed...\n" );
+    }
+    close( fd );
+    return 0;
 }
